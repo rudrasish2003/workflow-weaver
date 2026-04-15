@@ -8,15 +8,15 @@ export function ApiNode({ id, data }: NodeProps) {
   return (
     <div
       onClick={() => selectNode(id)}
-      className="w-48 rounded-xl border-2 border-blue-500 bg-blue-50 cursor-pointer hover:border-blue-600 hover:shadow-md transition-all"
+      className="w-48 rounded-xl border-2 border-node-api-border bg-node-api-bg cursor-pointer hover:shadow-md transition-all"
     >
       <div className="p-3">
-        <span className="inline-block rounded bg-blue-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-900 mb-1.5">
+        <span className="inline-block rounded bg-node-api-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-foreground mb-1.5">
           API
         </span>
         <p className="text-sm font-semibold text-foreground truncate">{d.label}</p>
         {(d.method || d.url) && (
-          <p className="text-[10px] text-blue-600 truncate mt-1">
+          <p className="text-[10px] text-node-api truncate mt-1">
             {d.method ?? "GET"} {d.url ?? ""}
           </p>
         )}
