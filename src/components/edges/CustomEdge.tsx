@@ -12,22 +12,18 @@ export function CustomEdge({
   });
 
   const color =
-    sourceHandleId === "true" ? "hsl(var(--edge-true))" :
-    sourceHandleId === "false" ? "hsl(var(--edge-false))" :
-    "hsl(var(--primary))";
+    sourceHandleId === "true" ? "hsl(152 69% 40%)" :
+    sourceHandleId === "false" ? "hsl(0 72% 51%)" :
+    "hsl(215 80% 52%)";
 
   return (
     <>
-      <BaseEdge
-        path={edgePath}
-        markerEnd={markerEnd}
-        style={{ ...style, stroke: color, strokeWidth: 2 }}
-      />
+      <BaseEdge path={edgePath} markerEnd={markerEnd} style={{ ...style, stroke: color, strokeWidth: 2 }} />
       {label && (
         <EdgeLabelRenderer>
           <div
             style={{ transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)` }}
-            className="absolute rounded-md bg-card px-2 py-0.5 text-[10px] font-medium border border-border shadow-sm pointer-events-none text-foreground"
+            className="absolute rounded bg-card px-2 py-0.5 text-[10px] font-medium border border-border shadow-sm pointer-events-none text-foreground"
           >
             {label as string}
           </div>
