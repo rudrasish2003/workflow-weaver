@@ -1,4 +1,4 @@
-export type NodeType = "start" | "api" | "condition" | "startNode" | "apiNode" | "conditionNode";
+export type NodeType = "start" | "api" | "condition" | "startNode" | "apiNode" | "conditionNode" |"endNode";
 
 export interface Position {
   x: number;
@@ -12,6 +12,9 @@ export interface NodeData {
   headers?: Record<string, string>;
   body?: Record<string, unknown>;
   condition?: string;
+  conditionVariable?: string;
+  conditionOperator?: "exists" | "not_exists" | "==" | "!=" | ">" | "<" | ">=" | "<=";
+  conditionValue?: string;
 }
 
 export interface WorkflowNode {
@@ -40,7 +43,7 @@ export interface WorkflowDocument {
 }
 
 export interface WorkflowShort {
-  id: string;
+  _id: string;
   name: string;
   updated_at: string;
 }

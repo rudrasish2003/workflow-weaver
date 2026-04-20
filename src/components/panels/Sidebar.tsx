@@ -41,10 +41,10 @@ export function Sidebar() {
 
         {workflows?.map((wf) => (
           <div
-            key={wf.id}
-            onClick={() => handleSelect(wf.id)}
+            key={wf._id}
+            onClick={() => handleSelect(wf._id)}
             className={`group relative flex items-start gap-2 rounded-lg p-2.5 cursor-pointer transition-colors ${
-              activeWorkflowId === wf.id
+              activeWorkflowId === wf._id
                 ? "bg-accent text-accent-foreground"
                 : "hover:bg-muted"
             }`}
@@ -55,7 +55,7 @@ export function Sidebar() {
               <p className="text-[11px] text-muted-foreground">{timeAgo(wf.updated_at)}</p>
             </div>
             <button
-              onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(wf.id); }}
+              onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(wf._id); }}
               className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
             >
               <Trash2 className="h-3.5 w-3.5" />

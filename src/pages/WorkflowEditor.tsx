@@ -4,11 +4,13 @@ import { useWorkflowStore } from "../store/workflowStore";
 import { StartNode } from "../components/nodes/StartNode";
 import { ApiNode } from "../components/nodes/ApiNode";
 import { ConditionNode } from "../components/nodes/ConditionNode";
+import { EndNode } from "../components/nodes/EndNode";
 import { CustomEdge } from "../components/edges/CustomEdge";
 import { Sidebar } from "../components/panels/Sidebar";
 import { Toolbar } from "../components/panels/Toolbar";
 import { NodeEditPanel } from "../components/panels/NodeEditPanel";
 
+// Define outside the component to prevent infinite re-renders
 const nodeTypes = {
   start: StartNode,
   api: ApiNode,
@@ -16,20 +18,32 @@ const nodeTypes = {
   startNode: StartNode,
   apiNode: ApiNode,
   conditionNode: ConditionNode,
+  endNode: EndNode,
 };
 
+// Define outside the component to prevent infinite re-renders
 const edgeTypes = { custom: CustomEdge };
 
 export default function WorkflowEditor() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, selectNode, selectedNodeId } = useWorkflowStore();
+  const { 
+    nodes, 
+    edges, 
+    onNodesChange, 
+    onEdgesChange, 
+    onConnect, 
+    selectNode, 
+    selectedNodeId 
+  } = useWorkflowStore();
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex h-screen w-full overflow-hidden bg-background">
       <Sidebar />
+      
       <div className="flex-1 flex flex-col min-w-0">
         <Toolbar />
+        
         <div className="flex-1 relative flex">
-          <div className="flex-1">
+          <div className="flex-1 h-full w-full">
             <ReactFlow
               nodes={nodes as any}
               edges={edges as any}
@@ -42,13 +56,22 @@ export default function WorkflowEditor() {
               edgeTypes={edgeTypes}
               defaultEdgeOptions={{ type: "custom" }}
               fitView
+              // Prevent connecting a node to itself
               isValidConnection={(connection) => connection.source !== connection.target}
+              // Helps React Flow optimize rendering during fast node drags
+              elevateNodesOnSelect={true}
             >
-              <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
-              <Controls />
-              <MiniMap />
+              <Background variant={BackgroundVariant.Dots} gap={24} size={1.5} color="var(--border)" />
+              <Controls className="bg-card border-border fill-foreground" />
+              <MiniMap 
+                className="bg-card border-border" 
+                maskColor="var(--muted)" 
+                nodeColor="var(--primary)" 
+              />
             </ReactFlow>
           </div>
+          
+          {/* Slide-in Edit Panel */}
           {selectedNodeId && <NodeEditPanel />}
         </div>
       </div>

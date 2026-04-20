@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SaveWorkflowModal } from "../modals/SaveWorkflowModal";
 import { AIGenerateModal } from "../modals/AIGenerateModal";
-import { Play, Zap, GitBranch, Sparkles, Save, Loader2 } from "lucide-react";
+// Added 'Square' for the End node icon
+import { Play, Zap, GitBranch, Sparkles, Save, Loader2, Square } from "lucide-react"; 
 
 export function Toolbar() {
   const { addNode, activeWorkflowId, activeWorkflowName, setActiveWorkflowName, isDirty, nodes, edges } = useWorkflowStore();
@@ -13,12 +14,15 @@ export function Toolbar() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
 
-  const handleAddNode = (type: "start" | "api" | "condition") => {
+  // Added "endNode" to the accepted types
+  const handleAddNode = (type: "start" | "api" | "condition" | "endNode") => {
     const id = crypto.randomUUID();
     const defaults: Record<string, any> = {
       start: { label: "Start", type: "start" },
       api: { label: "API Call", type: "api", method: "GET", url: "" },
       condition: { label: "Condition", type: "condition", condition: "" },
+      // Added default data for the end node
+      endNode: { label: "End", type: "endNode" }, 
     };
     addNode({
       id,
@@ -51,6 +55,10 @@ export function Toolbar() {
           </Button>
           <Button variant="outline" size="sm" onClick={() => handleAddNode("condition")} className="gap-1.5 text-xs">
             <GitBranch className="h-3.5 w-3.5 text-amber-500" /> Condition
+          </Button>
+          {/* New End Node Button */}
+          <Button variant="outline" size="sm" onClick={() => handleAddNode("endNode")} className="gap-1.5 text-xs">
+            <Square className="h-3.5 w-3.5 text-destructive" /> End
           </Button>
         </div>
 
