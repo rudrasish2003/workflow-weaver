@@ -9,8 +9,8 @@ import { CustomEdge } from "../components/edges/CustomEdge";
 import { Sidebar } from "../components/panels/Sidebar";
 import { Toolbar } from "../components/panels/Toolbar";
 import { NodeEditPanel } from "../components/panels/NodeEditPanel";
+import { ExecutionPanel } from "../components/panels/ExecutionPanel"; // ADD
 
-// Define outside the component to prevent infinite re-renders
 const nodeTypes = {
   start: StartNode,
   api: ApiNode,
@@ -21,7 +21,6 @@ const nodeTypes = {
   endNode: EndNode,
 };
 
-// Define outside the component to prevent infinite re-renders
 const edgeTypes = { custom: CustomEdge };
 
 export default function WorkflowEditor() {
@@ -32,7 +31,8 @@ export default function WorkflowEditor() {
     onEdgesChange, 
     onConnect, 
     selectNode, 
-    selectedNodeId 
+    selectedNodeId,
+    activeWorkflowId, // ADD
   } = useWorkflowStore();
 
   return (
@@ -56,9 +56,7 @@ export default function WorkflowEditor() {
               edgeTypes={edgeTypes}
               defaultEdgeOptions={{ type: "custom" }}
               fitView
-              // Prevent connecting a node to itself
               isValidConnection={(connection) => connection.source !== connection.target}
-              // Helps React Flow optimize rendering during fast node drags
               elevateNodesOnSelect={true}
             >
               <Background variant={BackgroundVariant.Dots} gap={24} size={1.5} color="var(--border)" />
@@ -73,6 +71,9 @@ export default function WorkflowEditor() {
           
           {/* Slide-in Edit Panel */}
           {selectedNodeId && <NodeEditPanel />}
+
+          {/* Execution Panel — visible when no node is selected and a workflow is loaded */}
+          {!selectedNodeId && <ExecutionPanel workflowId={activeWorkflowId} />} {/* ADD */}
         </div>
       </div>
     </div>
