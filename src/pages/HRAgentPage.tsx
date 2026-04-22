@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import {
   CheckCircle, XCircle, Loader2, RotateCcw,
-  Send, ChevronDown, ChevronRight, Bot, User,
+  Send, ChevronDown, ChevronRight, Bot, User, Sparkles,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -35,51 +35,23 @@ const agentApi = {
     apiClient.delete(`/api/agent/session/${session_id}`),
 };
 
-// ── Session ID ────────────────────────────────────────────────────────────────
 const makeSessionId = () => `s-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-function StatusPill({ status }: { status: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    collecting: { label: "Gathering info", cls: "bg-amber-100 text-amber-700" },
-    executing:  { label: "Executing",      cls: "bg-blue-100 text-blue-700" },
-    done:       { label: "Completed",      cls: "bg-emerald-100 text-emerald-700" },
-    error:      { label: "Error",          cls: "bg-red-100 text-red-700" },
-  };
-  const c = map[status];
-  if (!c) return null;
-  return (
-    <span className={cn("mt-1.5 inline-block text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full", c.cls)}>
-      {c.label}
-    </span>
-  );
-}
-
-function CollectedBadges({ collected }: { collected: Record<string, string> }) {
-  if (!Object.keys(collected).length) return null;
-  return (
-    <div className="mt-2 flex flex-wrap gap-1.5">
-      {Object.entries(collected).map(([k, v]) => (
-        <span key={k} className="inline-flex items-center gap-1 text-[11px] bg-muted border border-border rounded-md px-2 py-0.5">
-          <span className="text-muted-foreground">{k}:</span>
-          <span className="font-medium text-foreground">{String(v)}</span>
-        </span>
-      ))}
-    </div>
-  );
-}
-
+// ── Workflow trace (shown only on completion) ─────────────────────────────────
 function WorkflowTrace({ result }: { result: NonNullable<ApiMessage["workflow_result"]> }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="mt-3 rounded-lg border border-border overflow-hidden text-xs">
+    <div className="mt-2 rounded-xl border border-border overflow-hidden text-xs">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-2 px-3 py-2 bg-muted/40 hover:bg-muted/70 transition-colors text-left"
+        className="w-full flex items-center gap-2 px-3 py-2 bg-muted/30 hover:bg-muted/60 transition-colors text-left"
       >
-        {open ? <ChevronDown className="h-3.5 w-3.5 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
-        <span className="font-medium text-muted-foreground uppercase tracking-wider text-[10px]">
-          Workflow trace ({result.steps.length} step{result.steps.length !== 1 ? "s" : ""})
+        {open
+          ? <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
+          : <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />}
+        <Sparkles className="h-3 w-3 text-primary shrink-0" />
+        <span className="text-[11px] font-medium text-muted-foreground">
+          View workflow trace · {result.steps.length} step{result.steps.length !== 1 ? "s" : ""}
         </span>
       </button>
       {open && (
@@ -108,43 +80,40 @@ function WorkflowTrace({ result }: { result: NonNullable<ApiMessage["workflow_re
   );
 }
 
+// ── Single message bubble ─────────────────────────────────────────────────────
 function Message({ entry }: { entry: ChatEntry }) {
   const isUser = entry.role === "user";
+  const isDone = entry.data?.status === "done";
+
   return (
-    <div className={cn("flex gap-3 mb-4", isUser && "flex-row-reverse")}>
+    <div className={cn("flex gap-2.5 mb-5", isUser && "flex-row-reverse")}>
       {/* Avatar */}
       <div className={cn(
-        "w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 border",
+        "w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5",
         isUser
-          ? "bg-primary text-primary-foreground border-primary"
-          : "bg-card text-muted-foreground border-border"
+          ? "bg-primary text-primary-foreground"
+          : "bg-muted border border-border text-muted-foreground"
       )}>
         {isUser
           ? <User className="h-3.5 w-3.5" />
           : <Bot className="h-3.5 w-3.5" />}
       </div>
 
-      {/* Bubble */}
-      <div className={cn("max-w-[78%] min-w-0", isUser && "items-end flex flex-col")}>
+      {/* Bubble + extras */}
+      <div className={cn("max-w-[78%] min-w-0 flex flex-col", isUser && "items-end")}>
         <div className={cn(
-          "rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+          "px-4 py-2.5 text-sm leading-relaxed",
           isUser
-            ? "bg-primary text-primary-foreground rounded-tr-sm"
-            : "bg-card border border-border text-foreground rounded-tl-sm"
+            ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
+            : "bg-card border border-border text-foreground rounded-2xl rounded-tl-sm"
         )}>
           {entry.content}
         </div>
 
-        {/* Assistant extras */}
-        {!isUser && entry.data && (
-          <div className="px-1">
-            <StatusPill status={entry.data.status} />
-            {entry.data.collected && Object.keys(entry.data.collected).length > 0 && (
-              <CollectedBadges collected={entry.data.collected} />
-            )}
-            {entry.data.workflow_result && (
-              <WorkflowTrace result={entry.data.workflow_result} />
-            )}
+        {/* Only show trace when done */}
+        {!isUser && isDone && entry.data?.workflow_result && (
+          <div className="w-full mt-1 px-0.5">
+            <WorkflowTrace result={entry.data.workflow_result} />
           </div>
         )}
       </div>
@@ -152,17 +121,18 @@ function Message({ entry }: { entry: ChatEntry }) {
   );
 }
 
+// ── Typing indicator ──────────────────────────────────────────────────────────
 function TypingIndicator() {
   return (
-    <div className="flex gap-3 mb-4">
-      <div className="w-7 h-7 rounded-full bg-card border border-border flex items-center justify-center shrink-0">
+    <div className="flex gap-2.5 mb-5">
+      <div className="w-7 h-7 rounded-full bg-muted border border-border flex items-center justify-center shrink-0">
         <Bot className="h-3.5 w-3.5 text-muted-foreground" />
       </div>
       <div className="bg-card border border-border rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-1.5">
         {[0, 1, 2].map((i) => (
           <span
             key={i}
-            className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce"
+            className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce"
             style={{ animationDelay: `${i * 150}ms`, animationDuration: "900ms" }}
           />
         ))}
@@ -171,20 +141,21 @@ function TypingIndicator() {
   );
 }
 
+// ── Quick suggestion chips ────────────────────────────────────────────────────
 const SUGGESTIONS = [
-  "I want to apply for WFH tomorrow",
-  "I need leave from next Monday to Wednesday",
-  "Apply WFH for EMP001 on 2026-05-01",
-  "I'd like to take a sick day",
+  "I'd like to work from home tomorrow",
+  "Can I take leave next Monday to Wednesday?",
+  "I'm not feeling well, need a sick day",
+  "WFH request for EMP001 on 2026-05-01",
 ];
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function HRAgentPage() {
   const [sessionId, setSessionId] = useState(makeSessionId);
   const [messages, setMessages]   = useState<ChatEntry[]>([
     {
       role: "assistant",
-      content: "Hi! I'm your HR assistant. I can help you apply for Work From Home or Leave. What do you need today?",
+      content: "Hey! 👋 I'm Maya, your HR assistant. I can help you with WFH requests or leave applications. What do you need today?",
     },
   ]);
   const [input, setInput]     = useState("");
@@ -212,7 +183,6 @@ export default function HRAgentPage() {
         { role: "assistant", content: data.reply, data },
       ]);
 
-      // If done, auto-reset session after short delay so next message starts fresh
       if (data.status === "done") {
         setTimeout(() => setSessionId(makeSessionId()), 1500);
       }
@@ -221,7 +191,7 @@ export default function HRAgentPage() {
         ...prev,
         {
           role: "assistant",
-          content: "Sorry, I couldn't connect to the server. Please make sure the backend is running.",
+          content: "Hmm, I'm having trouble connecting right now. Could you try again in a moment?",
           data: { reply: "", status: "error" },
         },
       ]);
@@ -237,7 +207,7 @@ export default function HRAgentPage() {
     setMessages([
       {
         role: "assistant",
-        content: "Session reset! How can I help you?",
+        content: "Starting fresh! What can I help you with?",
       },
     ]);
     setInput("");
@@ -257,39 +227,51 @@ export default function HRAgentPage() {
       {/* ── Header ── */}
       <div className="shrink-0 h-12 border-b border-border bg-card flex items-center justify-between px-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
-            <Bot className="h-4 w-4 text-primary" />
+          <div className="relative">
+            <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <Bot className="h-4 w-4 text-primary" />
+            </div>
+            {/* Online dot */}
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-card" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground leading-none">HR Assistant</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">WFH &amp; Leave requests</p>
+            <p className="text-sm font-semibold text-foreground leading-none">Maya</p>
+            <p className="text-[10px] text-emerald-500 mt-0.5 font-medium">Online</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={reset} className="gap-1.5 text-xs text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={reset}
+          className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+        >
           <RotateCcw className="h-3.5 w-3.5" />
           New chat
         </Button>
       </div>
 
       {/* ── Messages ── */}
-      <ScrollArea className="flex-1 px-4 py-4">
+      <ScrollArea className="flex-1 px-4 py-5">
         {messages.map((m, i) => <Message key={i} entry={m} />)}
         {loading && <TypingIndicator />}
         <div ref={bottomRef} />
       </ScrollArea>
 
-      {/* ── Suggestions ── */}
+      {/* ── Quick suggestions (only on fresh chat) ── */}
       {showSuggestions && (
-        <div className="shrink-0 px-4 pb-2 flex gap-2 flex-wrap">
-          {SUGGESTIONS.map((s) => (
-            <button
-              key={s}
-              onClick={() => send(s)}
-              className="text-xs border border-border rounded-full px-3 py-1.5 bg-card text-muted-foreground hover:text-foreground hover:border-border/80 hover:bg-muted transition-colors"
-            >
-              {s}
-            </button>
-          ))}
+        <div className="shrink-0 px-4 pb-2">
+          <p className="text-[11px] text-muted-foreground mb-2 font-medium">Quick requests</p>
+          <div className="flex gap-2 flex-wrap">
+            {SUGGESTIONS.map((s) => (
+              <button
+                key={s}
+                onClick={() => send(s)}
+                className="text-xs border border-border rounded-full px-3 py-1.5 bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -300,13 +282,14 @@ export default function HRAgentPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKey}
-          placeholder="Type your request…  (Enter to send, Shift+Enter for new line)"
+          placeholder="Message Maya…"
           rows={1}
           disabled={loading}
           className={cn(
-            "flex-1 resize-none bg-background border border-input rounded-xl px-3 py-2 text-sm",
+            "flex-1 resize-none bg-muted/50 border border-input rounded-2xl px-4 py-2.5 text-sm",
             "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            "min-h-[38px] max-h-[120px] overflow-y-auto disabled:opacity-50 disabled:cursor-not-allowed"
+            "min-h-[42px] max-h-[120px] overflow-y-auto disabled:opacity-50 disabled:cursor-not-allowed",
+            "transition-colors focus:bg-background"
           )}
           style={{ lineHeight: "1.5" }}
         />
@@ -314,7 +297,7 @@ export default function HRAgentPage() {
           size="sm"
           onClick={() => send()}
           disabled={!input.trim() || loading}
-          className="h-[38px] px-3 rounded-xl shrink-0"
+          className="h-[42px] w-[42px] p-0 rounded-2xl shrink-0"
         >
           {loading
             ? <Loader2 className="h-4 w-4 animate-spin" />

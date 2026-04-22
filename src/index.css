@@ -73,8 +73,69 @@
   }
 }
 
+/* ── Node execution animations ──────────────────────────────────────────── */
+
+@keyframes executing-pulse {
+  0%   { box-shadow: 0 0 0 0px rgba(56, 138, 221, 0.7), 0 0 12px 2px rgba(56, 138, 221, 0.3); }
+  50%  { box-shadow: 0 0 0 8px rgba(56, 138, 221, 0.0), 0 0 18px 4px rgba(56, 138, 221, 0.15); }
+  100% { box-shadow: 0 0 0 0px rgba(56, 138, 221, 0.0), 0 0 12px 2px rgba(56, 138, 221, 0.1); }
+}
+
+@keyframes executing-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes executing-bounce {
+  0%   { transform: scale(1) translateY(0px); }
+  30%  { transform: scale(1.06) translateY(-2px); }
+  60%  { transform: scale(1.04) translateY(-1px); }
+  100% { transform: scale(1.04) translateY(-1px); }
+}
+
+@keyframes error-flash {
+  0%, 100% { box-shadow: 0 0 0 0px rgba(220, 38, 38, 0.7); }
+  50%       { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0.0); }
+}
+
+.node-executing {
+  animation:
+    executing-pulse 0.9s ease-in-out infinite,
+    executing-bounce 0.25s ease-out forwards !important;
+  outline: 2px solid rgba(56, 138, 221, 0.9) !important;
+  outline-offset: 3px !important;
+  position: relative;
+  overflow: visible !important;
+}
+
+.node-executing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(56, 138, 221, 0.18) 50%,
+    transparent 65%
+  );
+  background-size: 200% 100%;
+  animation: executing-shimmer 0.85s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.node-error-flash {
+  animation: error-flash 0.45s ease-out 3 !important;
+  outline: 2px solid rgba(220, 38, 38, 0.9) !important;
+  outline-offset: 3px !important;
+}
+
+/* ── ReactFlow base styles ──────────────────────────────────────────────── */
+
 .react-flow__node {
   @apply !shadow-none;
+  overflow: visible !important;
 }
 
 .react-flow__handle {
