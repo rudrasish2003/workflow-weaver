@@ -1,4 +1,7 @@
-export type NodeType = "start" | "api" | "condition" | "startNode" | "apiNode" | "conditionNode" |"endNode";
+export type NodeType =
+  | "start" | "api" | "condition"
+  | "startNode" | "apiNode" | "conditionNode"
+  | "endNode" | "llmNode";
 
 export interface Position {
   x: number;
@@ -7,14 +10,24 @@ export interface Position {
 
 export interface NodeData {
   label: string;
+  // API
   url?: string;
   method?: "GET" | "POST" | "PUT" | "DELETE";
   headers?: Record<string, string>;
   body?: Record<string, unknown>;
+  // Condition
   condition?: string;
   conditionVariable?: string;
   conditionOperator?: "exists" | "not_exists" | "==" | "!=" | ">" | "<" | ">=" | "<=";
   conditionValue?: string;
+  // LLM node
+  llmModel?: string;
+  systemPrompt?: string;
+  userPrompt?: string;
+  outputMode?: "text" | "json" | "decision";
+  outputSchema?: string;
+  temperature?: number;
+  maxTokens?: number;
 }
 
 export interface WorkflowNode {

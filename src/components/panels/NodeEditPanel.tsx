@@ -6,28 +6,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, X, Plus } from "lucide-react";
+import { LLMEditSection } from "./LLMEditSection";
 
 export function NodeEditPanel() {
-  const { 
-    selectedNodeId, 
-    nodes, 
-    edges, 
-    updateNodeData, 
-    removeNode, 
-    selectNode, 
-    removeEdge, 
-    addManualEdge 
+  const {
+    selectedNodeId,
+    nodes,
+    edges,
+    updateNodeData,
+    removeNode,
+    selectNode,
+    removeEdge,
+    addManualEdge,
   } = useWorkflowStore();
-  
-  const node = nodes.find((n) => n.id === selectedNodeId);
 
-  // Local state for the "Add Connection" dropdowns
+  const node = nodes.find((n) => n.id === selectedNodeId);
   const [newTarget, setNewTarget] = useState<string>("");
   const [newHandle, setNewHandle] = useState<string>("out");
-
   const baseType = node?.type?.replace("Node", "") as string;
 
-  // Reset connection dropdowns when a different node is selected
   useEffect(() => {
     setNewTarget("");
     if (baseType === "condition") setNewHandle("true");
@@ -36,20 +33,20 @@ export function NodeEditPanel() {
 
   if (!node) return null;
 
+  // ── Route LLM nodes to dedicated panel ───────────────────────────────────
+  if (node.type === "llmNode") return <LLMEditSection />;
+
   const outgoingEdges = edges.filter((e) => e.source === node.id);
 
-  // Helper to update individual condition fields AND auto-generate the canvas text
   const handleConditionChange = (updates: Partial<typeof node.data>) => {
     const newData = { ...node.data, ...updates };
     let condStr = newData.conditionVariable || "";
     const op = newData.conditionOperator;
-
     if (op) {
       if (op === "exists") condStr += " exists";
       else if (op === "not_exists") condStr += " doesn't exist";
       else condStr += ` ${op} ${newData.conditionValue || ""}`;
     }
-
     updateNodeData(node.id, { ...updates, condition: condStr.trim() });
   };
 
@@ -72,7 +69,7 @@ export function NodeEditPanel() {
           />
         </div>
 
-        {(baseType === "api") && (
+        {baseType === "api" && (
           <>
             <div>
               <Label className="text-xs">Method</Label>
@@ -80,9 +77,7 @@ export function NodeEditPanel() {
                 value={node.data.method ?? "GET"}
                 onValueChange={(v) => updateNodeData(node.id, { method: v as any })}
               >
-                <SelectTrigger className="mt-1 h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="mt-1 h-8 text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {["GET", "POST", "PUT", "DELETE"].map((m) => (
                     <SelectItem key={m} value={m}>{m}</SelectItem>
@@ -124,7 +119,7 @@ export function NodeEditPanel() {
           </>
         )}
 
-        {(baseType === "condition") && (
+        {baseType === "condition" && (
           <div className="space-y-3 bg-muted/50 p-2.5 rounded-lg border border-border">
             <div>
               <Label className="text-xs">Variable to check</Label>
@@ -156,11 +151,9 @@ export function NodeEditPanel() {
                 </SelectContent>
               </Select>
             </div>
-            
-            {/* Only show the value input if the operator requires a comparison number */}
             {!["exists", "not_exists"].includes(node.data.conditionOperator || "") && (
               <div>
-                <Label className="text-xs">Value (Number)</Label>
+                <Label className="text-xs">Value</Label>
                 <Input
                   type="number"
                   value={node.data.conditionValue ?? ""}
@@ -173,28 +166,31 @@ export function NodeEditPanel() {
           </div>
         )}
 
-        {/* --- CONNECTIONS UI BLOCK --- */}
+        {/* Connections */}
         <div className="pt-4 mt-2 border-t border-border space-y-3">
           <Label className="text-xs font-semibold">Connections (Outgoing)</Label>
-          
-          {/* List Existing Connections */}
           {outgoingEdges.length > 0 && (
             <div className="space-y-2">
               {outgoingEdges.map((edge) => {
                 const targetNode = nodes.find((n) => n.id === edge.target);
                 return (
-                  <div key={edge.id} className="flex items-center justify-between bg-muted/50 border border-border p-2 rounded-md text-xs shadow-sm">
+                  <div
+                    key={edge.id}
+                    className="flex items-center justify-between bg-muted/50 border border-border p-2 rounded-md text-xs"
+                  >
                     <div className="flex flex-col gap-0.5 min-w-0">
                       <span className="font-bold text-[9px] uppercase tracking-wider text-muted-foreground">
-                        {edge.sourceHandle === "true" ? "True Path" : edge.sourceHandle === "false" ? "False Path" : "Next"}
+                        {edge.sourceHandle === "true" ? "True Path"
+                          : edge.sourceHandle === "false" ? "False Path"
+                          : "Next"}
                       </span>
                       <span className="truncate font-medium text-foreground">
                         {targetNode?.data.label || "Unknown Node"}
                       </span>
                     </div>
-                    <button 
-                      onClick={() => removeEdge(edge.id)} 
-                      className="shrink-0 text-muted-foreground hover:text-destructive p-1 rounded hover:bg-destructive/10 transition-colors"
+                    <button
+                      onClick={() => removeEdge(edge.id)}
+                      className="shrink-0 text-muted-foreground hover:text-destructive p-1 rounded hover:bg-destructive/10"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -204,28 +200,24 @@ export function NodeEditPanel() {
             </div>
           )}
 
-          {/* Add New Connection Dropdowns (Hidden for End Nodes) */}
           {baseType !== "end" && (
             <div className="flex gap-1.5 items-end mt-2">
               {baseType === "condition" && (
                 <Select value={newHandle} onValueChange={setNewHandle}>
-                  <SelectTrigger className="h-8 text-xs w-[75px]">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs w-[75px]"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="true">True</SelectItem>
                     <SelectItem value="false">False</SelectItem>
                   </SelectContent>
                 </Select>
               )}
-              
               <Select value={newTarget} onValueChange={setNewTarget}>
                 <SelectTrigger className="h-8 text-xs flex-1">
                   <SelectValue placeholder="Connect to..." />
                 </SelectTrigger>
                 <SelectContent>
                   {nodes
-                    .filter((n) => n.id !== node.id && !n.type?.includes("start")) // Can't connect to self or a start node
+                    .filter((n) => n.id !== node.id && !n.type?.includes("start"))
                     .map((n) => (
                       <SelectItem key={n.id} value={n.id}>
                         {n.data.label || n.type}
@@ -233,7 +225,6 @@ export function NodeEditPanel() {
                     ))}
                 </SelectContent>
               </Select>
-
               <Button
                 size="sm"
                 variant="secondary"
@@ -241,7 +232,7 @@ export function NodeEditPanel() {
                 disabled={!newTarget}
                 onClick={() => {
                   addManualEdge(node.id, newTarget, baseType === "condition" ? newHandle : "out");
-                  setNewTarget(""); // Clear the dropdown after connecting
+                  setNewTarget("");
                 }}
               >
                 <Plus className="h-3.5 w-3.5" />
